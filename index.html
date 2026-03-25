@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Allocation Planner</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-gradient"></div>
+    <div class="background-pattern"></div>
+
+    <div class="container">
+        <header>
+            <h1>Asset <span>Allocation Planner</span></h1>
+            <p>Resilient Asset Allocation for the Modern Era</p>
+        </header>
+
+        <main class="dashboard">
+            <div class="input-section glass-panel">
+                <h2>1. Current Snapshot</h2>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Monthly SIP (₹)</label>
+                        <input type="number" id="monthlySip" value="50000" step="1000">
+                    </div>
+                    <div class="input-group">
+                        <label>Monthly Expenses (₹)</label>
+                        <input type="number" id="monthlyExp" value="60000" step="1000">
+                    </div>
+                    <div class="input-group">
+                        <label>Total Corpus (₹)</label>
+                        <div class="total-corpus-display" id="totalCorpusDisplay">₹0</div>
+                        <small class="hint">Auto-calculated from holdings below</small>
+                    </div>
+                </div>
+
+                <h3>Current Holdings (₹)</h3>
+                <div class="allocation-grid">
+                    <div class="input-group">
+                        <label>India Direct Equity</label>
+                        <input type="number" class="asset-input" id="currIndEq" value="1000000" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>India Mutual Funds</label>
+                        <input type="number" class="asset-input" id="currIndMf" value="1500000" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>US Direct Equity</label>
+                        <input type="number" class="asset-input" id="currUsEq" value="200000" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>US Mutual Funds</label>
+                        <input type="number" class="asset-input" id="currUsMf" value="300000" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Real Estate (Inv.)</label>
+                        <input type="number" class="asset-input" id="currRealEstate" value="1000000" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Debt/Fixed Income</label>
+                        <input type="number" class="asset-input" id="currDebt" value="500000" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Gold/Silver</label>
+                        <input type="number" class="asset-input" id="currGold" value="300000" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>InvITs/REITs</label>
+                        <input type="number" class="asset-input" id="currInvits" value="200000" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="goals-section glass-panel">
+                <h2>2. Financial Goals</h2>
+                <p class="subtitle">Add your life milestones (e.g., Retirement) to map liability timelines.</p>
+                
+                <div class="table-responsive">
+                    <table class="premium-table" id="goalsTable">
+                        <thead>
+                            <tr>
+                                <th>Goal Milestone</th>
+                                <th>Target Amount (Today's Value)</th>
+                                <th>Timeline (Years)</th>
+                                <th style="text-align: right; width: 60px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="goalsListBody">
+                            <!-- Goals injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="add-goal-form">
+                    <input type="text" id="goalName" placeholder="e.g., Kid's Undergrad">
+                    <input type="number" id="goalAmount" placeholder="Amount (Today's ₹)">
+                    <input type="number" id="goalYears" placeholder="Years Away">
+                    <button id="addGoalBtn" class="btn-secondary">+ Add Goal</button>
+                </div>
+            </div>
+
+            <div class="action-section" style="margin-bottom: 2rem;">
+                <button id="generatePlanBtn" class="btn-primary">Generate Resilience Plan</button>
+            </div>
+
+            <!-- OUTPUT DASHBOARD -->
+            <div id="resultsDashboard" class="results-section glass-panel hidden">
+                <h2>3. Allocation Strategy & Action Plan</h2>
+                <p class="strategy-desc">Your portfolio has been mapped to weather Hyperinflation, GFCs, and AI-driven Deflation scenarios, while securing your goals globally.</p>
+                
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h3>Target Portfolio Mix</h3>
+                        <ul id="targetBreakdown" class="breakdown-list"></ul>
+                        <div class="context-box mt-3">
+                            <small id="scenarioContext">This mix automatically diversifies across Indian & US markets, hard real estate, and defensive debt classes.</small>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <h3>Rebalancing Actions</h3>
+                        <p class="info-text">Move your funds to match exactly ₹ allocations:</p>
+                        <ul id="actionPlan" class="action-list"></ul>
+                    </div>
+                </div>
+
+                <div class="funds-recommendation">
+                    <h3>Recommended Instruments & Allocation</h3>
+                    <div class="table-responsive">
+                        <table class="premium-table">
+                            <thead>
+                                <tr>
+                                    <th>Asset Class / Category</th>
+                                    <th>Recommended Instrument</th>
+                                    <th>Strategic Purpose</th>
+                                    <th style="text-align: right; min-width: 120px;">Allocation %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fundTableBody">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="goals-feasibility">
+                    <h3>Goal Feasibility & Timeline</h3>
+                    <div id="feasibilityReport" style="margin-bottom: 1rem;"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="glass-panel" style="margin-top: 3rem; text-align: center; font-size: 0.85rem; color: var(--text-muted); padding: 1.5rem;">
+            <p><strong>Disclaimer:</strong> This tool provides informational asset allocation modeling based on assumed inflation (6%), portfolio growth rates (10%), and the standard 4% safe withdrawal rate (FIRE) rule. It does not constitute formal financial advice. Market conditions, hyperinflation, and macroeconomic shocks (like AI-driven job displacement) can alter these projections.</p>
+            <p style="margin-top: 0.75rem; color: var(--accent-secondary); font-size: 0.95rem;">Created by <strong>Kalpesh Dave</strong> | Contact for feedback & suggestions: <a href="mailto:kalpeshdave@gmail.com" style="color: inherit; text-decoration: none; font-weight: 600;">kalpeshdave@gmail.com</a></p>
+        </footer>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
