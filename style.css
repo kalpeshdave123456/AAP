@@ -150,6 +150,20 @@ input {
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
+/* Specific yellow highlight for Section 1 User Inputs */
+.input-section input {
+    background: #fef08a;
+    border-color: #facc15;
+    color: #0f172a;
+    font-weight: 500;
+}
+
+.input-section input:focus {
+    background: #fde047;
+    border-color: var(--warning);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+}
+
 input:focus {
     outline: none;
     border-color: var(--accent-primary);
