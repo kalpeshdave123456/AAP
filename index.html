@@ -3,312 +3,294 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MF Planner Pro</title>
+  <title>Mutual Fund & Asset Allocation Planner</title>
+  <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="page-bg"></div>
-  <div class="page-pattern"></div>
+  <div class="background-gradient"></div>
+  <div class="background-pattern"></div>
 
   <div class="container">
-    <header class="hero card">
+    <header class="hero glass-panel">
       <div>
-        <p class="eyebrow">GitHub-ready • Client-side only</p>
-        <h1>MF Planner <span>Pro</span></h1>
-        <p class="hero-copy">
-          Goal-based mutual fund and asset allocation planner with portfolio health checks,
-          profile-based allocation, scenario testing, and professional recommendation notes.
-        </p>
+        <p class="eyebrow">Goal-based planning • Mutual fund research • Portfolio diagnostics</p>
+        <h1>Mutual Fund & <span>Asset Allocation Planner</span></h1>
+        <p class="hero-copy">A professional planning tool to assess goals, recommend allocation, shortlist funds, and explain exactly what to do next.</p>
       </div>
       <div class="hero-actions">
-        <button id="saveProfileBtn" class="btn btn-secondary">Save Profile</button>
-        <button id="loadSampleBtn" class="btn btn-tertiary">Load Sample</button>
-        <button id="printBtn" class="btn btn-primary">Export / Print</button>
+        <button id="saveProfileBtn" class="btn-secondary">Save Progress</button>
+        <button id="resumeProfileBtn" class="btn-secondary">Load Saved</button>
       </div>
     </header>
 
-    <section class="summary-strip">
-      <div class="summary-card card compact">
-        <div class="summary-label">Health Score</div>
-        <div class="summary-value" id="healthScore">--</div>
-        <div class="summary-note" id="healthNote">Complete your profile</div>
+    <section class="glass-panel progress-shell">
+      <div class="progress-header">
+        <div>
+          <h2 class="progress-title">Planner Journey</h2>
+          <p class="muted">Move section-by-section using Next and Back.</p>
+        </div>
+        <div class="progress-badge"><span id="stepCounter">Step 1 of 5</span></div>
       </div>
-      <div class="summary-card card compact">
-        <div class="summary-label">Goal Readiness</div>
-        <div class="summary-value" id="goalReadiness">--</div>
-        <div class="summary-note" id="goalNote">No analysis yet</div>
-      </div>
-      <div class="summary-card card compact">
-        <div class="summary-label">Retirement Status</div>
-        <div class="summary-value" id="retirementStatus">--</div>
-        <div class="summary-note" id="retirementNote">Run planner</div>
-      </div>
-      <div class="summary-card card compact">
-        <div class="summary-label">Next SIP Route</div>
-        <div class="summary-value" id="sipRoute">--</div>
-        <div class="summary-note" id="sipRouteNote">Run planner</div>
+      <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+      <div class="step-labels">
+        <span class="step-label active" data-step-label="1">Profile</span>
+        <span class="step-label" data-step-label="2">Goals</span>
+        <span class="step-label" data-step-label="3">Portfolio</span>
+        <span class="step-label" data-step-label="4">Analysis</span>
+        <span class="step-label" data-step-label="5">Results</span>
       </div>
     </section>
 
-    <nav class="tabbar card">
-      <button class="tab active" data-tab="profile">1. Profile</button>
-      <button class="tab" data-tab="goals">2. Goals</button>
-      <button class="tab" data-tab="portfolio">3. Portfolio</button>
-      <button class="tab" data-tab="assumptions">4. Assumptions</button>
-      <button class="tab" data-tab="results">5. Results</button>
-    </nav>
-
     <main>
-      <section class="tab-panel active" id="tab-profile">
-        <div class="grid two">
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Investor profile</p>
-                <h2>Who is this plan for?</h2>
-              </div>
-            </div>
-            <div class="form-grid">
-              <label>
-                Age
-                <input type="number" id="age" min="18" max="90" value="35">
-              </label>
-              <label>
-                Retirement Age
-                <input type="number" id="retirementAge" min="40" max="90" value="58">
-              </label>
-              <label>
-                Monthly Income (₹)
-                <input type="number" id="monthlyIncome" min="0" step="1000" value="250000">
-              </label>
-              <label>
-                Monthly SIP Capacity (₹)
-                <input type="number" id="monthlySip" min="0" step="1000" value="50000">
-              </label>
-              <label>
-                Monthly Expenses (₹)
-                <input type="number" id="monthlyExp" min="0" step="1000" value="60000">
-              </label>
-              <label>
-                Emergency Fund Available?
-                <select id="emergencyMonths">
-                  <option value="0">Less than 3 months</option>
-                  <option value="3">3-6 months</option>
-                  <option value="6" selected>6-12 months</option>
-                  <option value="12">12+ months</option>
-                </select>
-              </label>
-              <label>
-                Risk Profile
-                <select id="riskProfile">
-                  <option value="conservative">Conservative</option>
-                  <option value="balanced" selected>Balanced</option>
-                  <option value="growth">Growth</option>
-                  <option value="aggressive">Aggressive</option>
-                </select>
-              </label>
-              <label>
-                Investment Style
-                <select id="plannerMode">
-                  <option value="mf" selected>Mutual Fund First</option>
-                  <option value="hybrid">Hybrid Allocation</option>
-                  <option value="advanced">Advanced / HNI</option>
-                </select>
-              </label>
-            </div>
+      <section class="planner-step glass-panel" data-step="1">
+        <div class="section-heading">
+          <div>
+            <h2>1. Profile</h2>
+            <p class="subtitle">Capture your investor profile so the target allocation can adapt to your age, risk level, and timeline.</p>
           </div>
+          <span class="section-chip">Investor setup</span>
+        </div>
 
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">How this version works</p>
-                <h2>Recommendation logic</h2>
-              </div>
-            </div>
-            <ul class="feature-list">
-              <li>Builds target allocation from age, risk profile, retirement horizon, and emergency-fund readiness.</li>
-              <li>Checks goal feasibility using inflation and expected-return assumptions.</li>
-              <li>Scores mutual fund suggestions using category fit, cost, risk, consistency, and support ratings.</li>
-              <li>Shows Value Research and Moneycontrol fields as supporting indicators, not as the sole decision factor.</li>
-              <li>Designed to run fully on GitHub Pages without any backend.</li>
-            </ul>
-            <div class="callout warning">
-              <strong>Note:</strong> Ratings and fund metadata in this GitHub starter are sample reference values for demo UX. Replace <code>fundData</code> in <code>app.js</code> with your curated dataset or API feed before production use.
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="userName">Name</label>
+            <input class="user-input" type="text" id="userName" value="Kalpesh Dave" placeholder="Your name">
+          </div>
+          <div class="input-group">
+            <label for="userEmail">Email</label>
+            <input class="user-input" type="email" id="userEmail" value="kalpeshdave@gmail.com" placeholder="you@example.com">
+          </div>
+          <div class="input-group">
+            <label for="age">Current Age</label>
+            <input class="user-input" type="number" id="age" min="18" max="90" value="51">
+          </div>
+          <div class="input-group">
+            <label for="retirementAge">Target Retirement Age</label>
+            <input class="user-input" type="number" id="retirementAge" min="35" max="90" value="60">
+          </div>
+          <div class="input-group">
+            <label for="riskProfile">Risk Profile</label>
+            <select class="user-input" id="riskProfile">
+              <option value="conservative">Conservative</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="growth">Growth</option>
+              <option value="aggressive">Aggressive</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="monthlySip">Monthly SIP (₹)</label>
+            <input class="user-input" type="number" id="monthlySip" min="0" step="1000" value="50000">
+          </div>
+          <div class="input-group">
+            <label for="monthlyExp">Monthly Expenses (₹)</label>
+            <input class="user-input" type="number" id="monthlyExp" min="0" step="1000" value="60000">
+          </div>
+          <div class="input-group">
+            <label for="monthlyIncome">Monthly Income (₹)</label>
+            <input class="user-input" type="number" id="monthlyIncome" min="0" step="1000" value="300000">
+          </div>
+        </div>
+
+        <div class="smart-defaults card-row">
+          <div class="mini-card">
+            <div class="mini-label">Smart default</div>
+            <strong id="defaultSummary">Balanced profile selected</strong>
+            <p class="muted small">Suggested allocation and fund shortlist will adapt when you change age or risk profile.</p>
+          </div>
+          <div class="mini-card assumptions-box">
+            <div class="mini-label">Key assumptions</div>
+            <div class="assumption-grid">
+              <div><span>Portfolio return</span><strong>10%</strong></div>
+              <div><span>Inflation</span><strong>6%</strong></div>
+              <div><span>Withdrawal rate</span><strong>4%</strong></div>
+              <div><span>Emergency fund target</span><strong>12 months</strong></div>
             </div>
           </div>
         </div>
+
+        <div class="section-nav">
+          <button class="btn-secondary" disabled>← Back</button>
+          <button class="btn-primary next-btn" data-next="2">Next → Goals</button>
+        </div>
       </section>
 
-      <section class="tab-panel" id="tab-goals">
-        <div class="card">
-          <div class="section-head split">
-            <div>
-              <p class="eyebrow">Goal planning</p>
-              <h2>Life milestones and liabilities</h2>
-            </div>
-            <button id="addGoalBtn" class="btn btn-secondary">+ Add Goal</button>
+      <section class="planner-step glass-panel hidden" data-step="2">
+        <div class="section-heading">
+          <div>
+            <h2>2. Goals</h2>
+            <p class="subtitle">Add goals inline. No popups. Track future needs in today’s value.</p>
           </div>
-          <div class="table-wrap">
-            <table>
+          <span class="section-chip">Goal planning</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="premium-table">
+            <thead>
+              <tr>
+                <th>Goal</th>
+                <th>Target Amount (₹)</th>
+                <th>Years Away</th>
+                <th>Priority</th>
+                <th style="text-align:right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="goalsListBody"></tbody>
+            <tfoot>
+              <tr class="goal-entry-row">
+                <td><input class="user-input inline-input" type="text" id="goalName" placeholder="Retirement / Child Education / House"></td>
+                <td><input class="user-input inline-input" type="number" id="goalAmount" min="0" placeholder="Amount"></td>
+                <td><input class="user-input inline-input" type="number" id="goalYears" min="1" placeholder="Years"></td>
+                <td>
+                  <select class="user-input inline-input" id="goalPriority">
+                    <option>High</option>
+                    <option selected>Medium</option>
+                    <option>Low</option>
+                  </select>
+                </td>
+                <td style="text-align:right;"><button id="addGoalBtn" class="btn-secondary">+ Add Goal</button></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="goal-templates">
+          <button class="template-btn" data-template="Retirement|50000000|9|High">Retirement</button>
+          <button class="template-btn" data-template="Child Education|2500000|10|High">Child Education</button>
+          <button class="template-btn" data-template="House Upgrade|15000000|7|Medium">House Upgrade</button>
+          <button class="template-btn" data-template="Travel Corpus|1500000|5|Low">Travel</button>
+        </div>
+
+        <div class="section-nav">
+          <button class="btn-secondary back-btn" data-back="1">← Back</button>
+          <button class="btn-primary next-btn" data-next="3">Next → Portfolio</button>
+        </div>
+      </section>
+
+      <section class="planner-step glass-panel hidden" data-step="3">
+        <div class="section-heading">
+          <div>
+            <h2>3. Current Portfolio</h2>
+            <p class="subtitle">Enter current holdings. The tool will calculate your corpus, concentration, and rebalancing gaps.</p>
+          </div>
+          <span class="section-chip">Portfolio capture</span>
+        </div>
+
+        <div class="summary-bar">
+          <div class="summary-pill"><span>Total Corpus</span><strong id="totalCorpusDisplay">₹0</strong></div>
+          <div class="summary-pill"><span>Emergency Fund Need</span><strong id="emergencyNeed">₹0</strong></div>
+          <div class="summary-pill"><span>Monthly Surplus</span><strong id="monthlySurplus">₹0</strong></div>
+        </div>
+
+        <div class="allocation-grid">
+          <div class="input-group"><label>India Mutual Funds</label><input class="user-input asset-input" type="number" id="currIndMf" min="0" value="1500000"></div>
+          <div class="input-group"><label>India Direct Equity</label><input class="user-input asset-input" type="number" id="currIndEq" min="0" value="1000000"></div>
+          <div class="input-group"><label>US Mutual Funds / ETFs</label><input class="user-input asset-input" type="number" id="currUsMf" min="0" value="300000"></div>
+          <div class="input-group"><label>US Direct Equity</label><input class="user-input asset-input" type="number" id="currUsEq" min="0" value="200000"></div>
+          <div class="input-group"><label>Debt / Fixed Income</label><input class="user-input asset-input" type="number" id="currDebt" min="0" value="500000"></div>
+          <div class="input-group"><label>Gold / Silver</label><input class="user-input asset-input" type="number" id="currGold" min="0" value="300000"></div>
+          <div class="input-group"><label>InvITs / REITs</label><input class="user-input asset-input" type="number" id="currInvits" min="0" value="200000"></div>
+          <div class="input-group"><label>Real Estate (Investment)</label><input class="user-input asset-input" type="number" id="currRealEstate" min="0" value="1000000"></div>
+        </div>
+
+        <div class="section-nav">
+          <button class="btn-secondary back-btn" data-back="2">← Back</button>
+          <button class="btn-primary next-btn" data-next="4">Next → Analysis</button>
+        </div>
+      </section>
+
+      <section class="planner-step glass-panel hidden" data-step="4">
+        <div class="section-heading">
+          <div>
+            <h2>4. Analysis Setup</h2>
+            <p class="subtitle">Review the scoring framework and generate your professional planner output.</p>
+          </div>
+          <span class="section-chip">Analysis engine</span>
+        </div>
+
+        <div class="results-grid setup-grid">
+          <div class="result-card">
+            <h3>Fund selection logic</h3>
+            <ul class="bullet-lite">
+              <li>Category fit based on goal horizon and risk profile</li>
+              <li>Downside control, consistency, and expense awareness</li>
+              <li>Value Research Rating and Moneycontrol Rating as supporting inputs</li>
+              <li>Action-oriented shortlist: Best Fit, Lower Cost, Safer Alternative</li>
+            </ul>
+          </div>
+          <div class="result-card">
+            <h3>Diagnostics included</h3>
+            <ul class="bullet-lite">
+              <li>Financial health score</li>
+              <li>Emergency fund adequacy</li>
+              <li>Goal readiness and FIRE check</li>
+              <li>Current vs target allocation charts</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section-nav">
+          <button class="btn-secondary back-btn" data-back="3">← Back</button>
+          <button id="generatePlanBtn" class="btn-primary">Generate Professional Plan</button>
+        </div>
+      </section>
+
+      <section id="resultsStep" class="planner-step glass-panel hidden" data-step="5">
+        <div class="section-heading">
+          <div>
+            <h2>5. Results Dashboard</h2>
+            <p class="subtitle">A professional summary of allocation, fund ideas, and next actions.</p>
+          </div>
+          <span class="section-chip">Advisor view</span>
+        </div>
+
+        <div class="results-grid top-metrics">
+          <div class="metric-card"><span>Financial Health Score</span><strong id="healthScore">--</strong><small id="healthMessage">Run analysis</small></div>
+          <div class="metric-card"><span>Goal Readiness</span><strong id="goalStatus">--</strong><small id="goalMessage">Run analysis</small></div>
+          <div class="metric-card"><span>Retirement Readiness</span><strong id="fireStatus">--</strong><small id="fireMessage">Run analysis</small></div>
+          <div class="metric-card"><span>Top Action</span><strong id="topAction">--</strong><small id="topActionDetail">Run analysis</small></div>
+        </div>
+
+        <div class="results-grid">
+          <div class="result-card chart-card">
+            <h3>Current Allocation</h3>
+            <canvas id="currentAllocationChart" height="260"></canvas>
+          </div>
+          <div class="result-card chart-card">
+            <h3>Target Allocation</h3>
+            <canvas id="targetAllocationChart" height="260"></canvas>
+          </div>
+        </div>
+
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>Target Portfolio Mix</h3>
+            <ul id="targetBreakdown" class="breakdown-list"></ul>
+          </div>
+          <div class="result-card">
+            <h3>Rebalancing Actions</h3>
+            <ul id="actionPlan" class="action-list"></ul>
+          </div>
+        </div>
+
+        <div class="funds-recommendation result-card full-width-card">
+          <div class="card-header-split">
+            <h3>Recommended Mutual Fund Shortlist</h3>
+            <small class="muted">Click any row to compare details</small>
+          </div>
+          <div class="table-responsive">
+            <table class="premium-table clickable-table">
               <thead>
                 <tr>
-                  <th>Goal</th>
-                  <th>Amount Today</th>
-                  <th>Years Away</th>
-                  <th>Type</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="goalsBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section class="tab-panel" id="tab-portfolio">
-        <div class="grid two">
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Current allocation</p>
-                <h2>Portfolio inputs</h2>
-              </div>
-              <div class="metric-pill">
-                Total Corpus <span id="totalCorpusDisplay">₹0</span>
-              </div>
-            </div>
-            <div class="form-grid">
-              <label>India Equity Funds / Index Funds<input type="number" class="asset-input" id="currIndMf" value="1500000"></label>
-              <label>India Direct Equity<input type="number" class="asset-input" id="currIndEq" value="1000000"></label>
-              <label>US / International Funds<input type="number" class="asset-input" id="currUsMf" value="300000"></label>
-              <label>US Direct Equity<input type="number" class="asset-input" id="currUsEq" value="200000"></label>
-              <label>Debt / Fixed Income<input type="number" class="asset-input" id="currDebt" value="500000"></label>
-              <label>Gold / Silver<input type="number" class="asset-input" id="currGold" value="300000"></label>
-              <label>InvIT / REIT<input type="number" class="asset-input" id="currInvits" value="200000"></label>
-              <label>Real Estate (Investment)<input type="number" class="asset-input" id="currRealEstate" value="1000000"></label>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Portfolio hygiene</p>
-                <h2>Professional checks</h2>
-              </div>
-            </div>
-            <div id="diagnostics" class="stack"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="tab-panel" id="tab-assumptions">
-        <div class="grid two">
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Projection engine</p>
-                <h2>Assumptions</h2>
-              </div>
-            </div>
-            <div class="form-grid">
-              <label>Expected Portfolio Return (%)<input type="number" id="expectedReturn" step="0.1" value="10"></label>
-              <label>Inflation (%)<input type="number" id="inflation" step="0.1" value="6"></label>
-              <label>Safe Withdrawal Rate (%)<input type="number" id="withdrawalRate" step="0.1" value="4"></label>
-              <label>Annual SIP Step-up (%)<input type="number" id="sipStepUp" step="0.5" value="5"></label>
-              <label>Crash Scenario Equity Drawdown (%)<input type="number" id="crashDrawdown" step="1" value="25"></label>
-              <label>Low Return Scenario (%)<input type="number" id="lowReturn" step="0.1" value="7"></label>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Scenario testing</p>
-                <h2>What this improves vs your MVP</h2>
-              </div>
-            </div>
-            <ul class="feature-list">
-              <li>Removes single static allocation for all users.</li>
-              <li>Lets users compare base plan with conservative assumptions.</li>
-              <li>Helps explain recommendation confidence instead of giving only a generic “buy/sell” output.</li>
-              <li>Creates a better advisor-style report for GitHub deployment demos.</li>
-            </ul>
-            <button id="generatePlanBtn" class="btn btn-primary full">Generate Professional Plan</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="tab-panel" id="tab-results">
-        <div class="grid two results-top">
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Allocation view</p>
-                <h2>Current vs target</h2>
-              </div>
-            </div>
-            <canvas id="allocationChart"></canvas>
-          </div>
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Action routing</p>
-                <h2>Where new money should go</h2>
-              </div>
-            </div>
-            <div id="actionPlan" class="stack"></div>
-          </div>
-        </div>
-
-        <div class="grid two">
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Goal readiness</p>
-                <h2>Timeline and feasibility</h2>
-              </div>
-            </div>
-            <div id="goalFeasibility" class="stack"></div>
-          </div>
-          <div class="card">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Retirement planner</p>
-                <h2>FIRE / corpus status</h2>
-              </div>
-            </div>
-            <div id="retirementPanel" class="stack"></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="section-head split">
-            <div>
-              <p class="eyebrow">Mutual fund strategy</p>
-              <h2>Professional recommendation table</h2>
-            </div>
-            <div class="legend-inline">
-              <span class="legend-item"><span class="dot dot-green"></span> Best fit</span>
-              <span class="legend-item"><span class="dot dot-blue"></span> Lower-cost option</span>
-              <span class="legend-item"><span class="dot dot-amber"></span> Aggressive option</span>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Bucket</th>
+                  <th>Category</th>
                   <th>Fund</th>
+                  <th>Fit</th>
+                  <th>Value Research Rating</th>
+                  <th>Moneycontrol Rating</th>
                   <th>Why it fits</th>
-                  <th>VR</th>
-                  <th>MC</th>
-                  <th>Riskometer</th>
-                  <th>Score</th>
-                  <th>Suggested Allocation</th>
                 </tr>
               </thead>
               <tbody id="fundTableBody"></tbody>
@@ -316,22 +298,40 @@
           </div>
         </div>
 
-        <div class="card">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Advisor notes</p>
-              <h2>Key recommendations</h2>
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>Goal Feasibility</h3>
+            <div id="feasibilityReport"></div>
+          </div>
+          <div class="result-card">
+            <h3>Advisor Notes</h3>
+            <div id="advisorNotes" class="advisor-notes"></div>
+            <div class="report-actions">
+              <button id="printReportBtn" class="btn-secondary">Print / Save PDF</button>
             </div>
           </div>
-          <div id="advisorNotes" class="stack"></div>
+        </div>
+
+        <div class="section-nav">
+          <button class="btn-secondary back-btn" data-back="4">← Back</button>
+          <button class="btn-primary" id="startOverBtn">Start Over</button>
         </div>
       </section>
     </main>
 
-    <footer class="footer card">
-      <p><strong>MF Planner Pro</strong> is a static GitHub Pages starter for mutual fund and asset allocation planning. Replace sample fund metadata and ratings before production deployment.</p>
-      <p>Created for Kalpesh Dave • Feedback: <a href="mailto:kalpeshdave@gmail.com">kalpeshdave@gmail.com</a></p>
+    <footer class="glass-panel footer-panel">
+      <p><strong>Important assumptions:</strong> Expected portfolio return 10%, long-term inflation 6%, and retirement corpus logic uses a 4% withdrawal rate. These are planning assumptions only and can differ materially from real-world outcomes.</p>
+      <p><strong>Disclaimer:</strong> Mutual funds are subject to market risks. Read all scheme-related documents carefully. Ratings such as Value Research Rating and Moneycontrol Rating are useful supporting signals, but they are backward-looking and should not be the sole basis for investment decisions.</p>
+      <p class="footer-meta">Created by <strong>Kalpesh Dave</strong> • Feedback: <a href="mailto:kalpeshdave@gmail.com">kalpeshdave@gmail.com</a></p>
     </footer>
+  </div>
+
+  <div id="fundModal" class="modal hidden">
+    <div class="modal-card">
+      <button id="closeModalBtn" class="modal-close">×</button>
+      <h3 id="modalFundName">Fund details</h3>
+      <div id="modalFundBody" class="modal-body"></div>
+    </div>
   </div>
 
   <script src="app.js"></script>

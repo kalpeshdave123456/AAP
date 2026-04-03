@@ -1,642 +1,621 @@
-const goals = [
-  { id: 1, name: 'Kid 1 Undergrad', amount: 2500000, years: 10, type: 'education' },
-  { id: 2, name: 'Retirement', amount: 50000000, years: 20, type: 'retirement' }
+const STORAGE_KEY = 'mf_planner_pro_v4';
+let currentStep = 1;
+let currentCharts = { current: null, target: null };
+
+let goals = [
+  { id: 1, name: 'Child Education', amount: 2500000, years: 10, priority: 'High' },
+  { id: 2, name: 'Retirement', amount: 50000000, years: 9, priority: 'High' }
 ];
 
-const fundData = {
-  core: [
-    {
-      name: 'Parag Parikh Flexi Cap Fund',
-      bucket: 'Best fit',
-      category: 'Flexi Cap',
-      risk: 'Moderately High',
-      vr: 5,
-      mc: 5,
-      expense: 0.76,
-      consistency: 9,
-      costScore: 8,
-      style: 'global-aware',
-      notes: 'Core diversified active fund with blended India-plus-global orientation and reasonable cost.'
-    },
-    {
-      name: 'UTI Nifty 50 Index Fund',
-      bucket: 'Lower-cost option',
-      category: 'Large Cap Index',
-      risk: 'Moderate',
-      vr: 4,
-      mc: 4,
-      expense: 0.2,
-      consistency: 8,
-      costScore: 10,
-      style: 'index',
-      notes: 'Simple low-cost core holding for users preferring clean benchmark exposure.'
-    },
-    {
-      name: 'HDFC Flexi Cap Fund',
-      bucket: 'Aggressive option',
-      category: 'Flexi Cap',
-      risk: 'Moderately High',
-      vr: 4,
-      mc: 4,
-      expense: 0.95,
-      consistency: 8,
-      costScore: 7,
-      style: 'active',
-      notes: 'Broader active style suited to users comfortable with active manager tilt.'
-    }
-  ],
-  satellite: [
-    {
-      name: 'HDFC Mid-Cap Opportunities Fund',
-      bucket: 'Best fit',
-      category: 'Mid Cap',
-      risk: 'High',
-      vr: 4,
-      mc: 4,
-      expense: 0.83,
-      consistency: 8,
-      costScore: 7,
-      style: 'growth',
-      notes: 'Adds controlled mid-cap growth for long-horizon investors.'
-    },
-    {
-      name: 'Nippon India Small Cap Fund',
-      bucket: 'Aggressive option',
-      category: 'Small Cap',
-      risk: 'Very High',
-      vr: 4,
-      mc: 4,
-      expense: 0.73,
-      consistency: 7,
-      costScore: 7,
-      style: 'smallcap',
-      notes: 'Only for investors with high risk tolerance and long patience.'
-    }
-  ],
-  debt: [
-    {
-      name: 'HDFC Corporate Bond Fund',
-      bucket: 'Best fit',
-      category: 'Debt',
-      risk: 'Moderate',
-      vr: 4,
-      mc: 4,
-      expense: 0.36,
-      consistency: 8,
-      costScore: 9,
-      style: 'quality debt',
-      notes: 'Suitable core debt sleeve for stability and predictable compounding.'
-    },
-    {
-      name: 'SBI Magnum Gilt Fund',
-      bucket: 'Interest-rate hedge',
-      category: 'Gilt',
-      risk: 'Moderate',
-      vr: 4,
-      mc: 3,
-      expense: 0.62,
-      consistency: 7,
-      costScore: 7,
-      style: 'duration',
-      notes: 'Useful when falling rates and sovereign safety are key priorities.'
-    },
-    {
-      name: 'Quant Liquid Fund',
-      bucket: 'Emergency sleeve',
-      category: 'Liquid',
-      risk: 'Low to Moderate',
-      vr: 3,
-      mc: 3,
-      expense: 0.22,
-      consistency: 7,
-      costScore: 10,
-      style: 'cash',
-      notes: 'For emergency cash and near-term liabilities rather than return maximization.'
-    }
-  ],
-  global: [
-    {
-      name: 'Motilal Oswal S&P 500 Index Fund',
-      bucket: 'Best fit',
-      category: 'International',
-      risk: 'Moderately High',
-      vr: 4,
-      mc: 4,
-      expense: 0.5,
-      consistency: 8,
-      costScore: 8,
-      style: 'global index',
-      notes: 'Simple USD diversification sleeve for global exposure.'
-    },
-    {
-      name: 'Mirae Asset NYSE FANG+ ETF FoF',
-      bucket: 'Aggressive option',
-      category: 'International / Tech',
-      risk: 'Very High',
-      vr: 3,
-      mc: 4,
-      expense: 0.62,
-      consistency: 7,
-      costScore: 7,
-      style: 'tech',
-      notes: 'For users explicitly seeking concentrated tech and innovation exposure.'
-    }
-  ]
+const profileTargets = {
+  conservative: { indMf: 20, indEq: 8, usMf: 8, usEq: 2, debt: 28, gold: 12, invits: 7, realEstate: 15 },
+  balanced:     { indMf: 22, indEq: 12, usMf: 10, usEq: 4, debt: 20, gold: 10, invits: 7, realEstate: 15 },
+  growth:       { indMf: 24, indEq: 16, usMf: 12, usEq: 6, debt: 14, gold: 8,  invits: 6, realEstate: 14 },
+  aggressive:   { indMf: 26, indEq: 19, usMf: 13, usEq: 8, debt: 10, gold: 7,  invits: 5, realEstate: 12 }
 };
 
-const tabs = document.querySelectorAll('.tab');
-const panels = document.querySelectorAll('.tab-panel');
-const assetInputs = document.querySelectorAll('.asset-input');
-let allocationChart;
+const fundDatabase = [
+  {
+    category: 'India Flexi Cap',
+    fit: 'Core Growth',
+    name: 'Parag Parikh Flexi Cap Fund',
+    valueResearch: '5★',
+    moneycontrol: '5★',
+    expense: 'Low',
+    purpose: 'Strong core holding for long-term Indian equity exposure with selective global style discipline.',
+    notes: 'Suitable as a core diversified equity fund for long-duration goals.',
+    benchmark: 'NIFTY 500 TRI',
+    riskometer: 'Very High',
+    score: 90,
+    alt: 'Index alternative: Nifty 50 Index Fund'
+  },
+  {
+    category: 'India Large & Mid Cap',
+    fit: 'Blend',
+    name: 'HDFC Large and Mid Cap Fund',
+    valueResearch: '4★',
+    moneycontrol: '4★',
+    expense: 'Moderate',
+    purpose: 'Balanced style to capture large-cap stability and mid-cap growth.',
+    notes: 'Useful for balanced and growth profiles wanting a single blend vehicle.',
+    benchmark: 'NIFTY LargeMidcap 250 TRI',
+    riskometer: 'Very High',
+    score: 84,
+    alt: 'Safer alternative: Flexi Cap Fund'
+  },
+  {
+    category: 'India Small Cap',
+    fit: 'Satellite',
+    name: 'Nippon India Small Cap Fund',
+    valueResearch: '4★',
+    moneycontrol: '4★',
+    expense: 'Moderate',
+    purpose: 'High growth satellite allocation for long time horizons only.',
+    notes: 'Best for aggressive investors who can tolerate volatility.',
+    benchmark: 'NIFTY Smallcap 250 TRI',
+    riskometer: 'Very High',
+    score: 78,
+    alt: 'Safer alternative: Mid Cap Fund'
+  },
+  {
+    category: 'US Index / Feeder',
+    fit: 'Global Hedge',
+    name: 'Motilal Oswal S&P 500 Index Fund',
+    valueResearch: '4★',
+    moneycontrol: '4★',
+    expense: 'Low',
+    purpose: 'Simple broad US market exposure and USD diversification.',
+    notes: 'Useful for global diversification instead of concentrated stock picks.',
+    benchmark: 'S&P 500',
+    riskometer: 'Very High',
+    score: 86,
+    alt: 'Alternative: Nasdaq 100 exposure'
+  },
+  {
+    category: 'US Growth / Innovation',
+    fit: 'Satellite',
+    name: 'Mirae Asset NYSE FANG+ ETF FoF',
+    valueResearch: '3★',
+    moneycontrol: '4★',
+    expense: 'Moderate',
+    purpose: 'Concentrated innovation and platform exposure for aggressive investors.',
+    notes: 'Should remain a limited satellite allocation.',
+    benchmark: 'NYSE FANG+ Index',
+    riskometer: 'Very High',
+    score: 72,
+    alt: 'Safer alternative: S&P 500 Index Fund'
+  },
+  {
+    category: 'Short Duration Debt',
+    fit: 'Capital Stability',
+    name: 'HDFC Short Term Debt Fund',
+    valueResearch: '4★',
+    moneycontrol: '4★',
+    expense: 'Low',
+    purpose: 'Stability bucket for near-term goals and rebalancing reserve.',
+    notes: 'Useful for conservative and retirement-focused planning.',
+    benchmark: 'CRISIL Short Duration Debt',
+    riskometer: 'Moderate',
+    score: 83,
+    alt: 'Alternative: Corporate Bond Fund'
+  },
+  {
+    category: 'Corporate Bond / Gilt',
+    fit: 'Defensive Debt',
+    name: 'SBI Magnum Gilt Fund',
+    valueResearch: '4★',
+    moneycontrol: '3★',
+    expense: 'Moderate',
+    purpose: 'High-quality debt option for defensive allocation.',
+    notes: 'Better suited to investors who understand rate sensitivity.',
+    benchmark: 'CRISIL Dynamic Gilt',
+    riskometer: 'Moderately High',
+    score: 76,
+    alt: 'Alternative: Short Duration Debt Fund'
+  },
+  {
+    category: 'Gold ETF',
+    fit: 'Inflation Hedge',
+    name: 'Nippon India Gold BeES',
+    valueResearch: '4★',
+    moneycontrol: '4★',
+    expense: 'Low',
+    purpose: 'Simple portfolio hedge against inflation, currency stress, and shocks.',
+    notes: 'Should complement rather than replace debt allocation.',
+    benchmark: 'Domestic Gold Price',
+    riskometer: 'High',
+    score: 80,
+    alt: 'Alternative: Sovereign Gold Bonds when available'
+  }
+];
 
-tabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    tabs.forEach(t => t.classList.remove('active'));
-    panels.forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+const el = (id) => document.getElementById(id);
+const stepEls = () => document.querySelectorAll('.planner-step');
+const numberFmt = (num) => `₹${Math.round(num || 0).toLocaleString('en-IN')}`;
+
+function getProfile() {
+  return {
+    userName: el('userName').value.trim(),
+    userEmail: el('userEmail').value.trim(),
+    age: Number(el('age').value) || 0,
+    retirementAge: Number(el('retirementAge').value) || 0,
+    riskProfile: el('riskProfile').value,
+    monthlySip: Number(el('monthlySip').value) || 0,
+    monthlyExp: Number(el('monthlyExp').value) || 0,
+    monthlyIncome: Number(el('monthlyIncome').value) || 0,
+    currIndMf: Number(el('currIndMf').value) || 0,
+    currIndEq: Number(el('currIndEq').value) || 0,
+    currUsMf: Number(el('currUsMf').value) || 0,
+    currUsEq: Number(el('currUsEq').value) || 0,
+    currDebt: Number(el('currDebt').value) || 0,
+    currGold: Number(el('currGold').value) || 0,
+    currInvits: Number(el('currInvits').value) || 0,
+    currRealEstate: Number(el('currRealEstate').value) || 0,
+  };
+}
+
+function setProfile(data) {
+  Object.entries(data || {}).forEach(([key, value]) => {
+    const field = el(key);
+    if (field) field.value = value;
   });
-});
-
-function formatINR(num) {
-  return `₹${Math.round(num || 0).toLocaleString('en-IN')}`;
 }
 
-function getValue(id) {
-  return Number(document.getElementById(id).value) || 0;
+function renderGoals() {
+  const tbody = el('goalsListBody');
+  tbody.innerHTML = '';
+  goals.forEach((g) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${g.name}</strong></td>
+      <td>${numberFmt(g.amount)}</td>
+      <td>${g.years}</td>
+      <td><span class="fit-badge">${g.priority}</span></td>
+      <td style="text-align:right;"><button class="remove-goal" data-id="${g.id}" title="Remove">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.remove-goal').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      goals = goals.filter((g) => g.id !== Number(btn.dataset.id));
+      renderGoals();
+      saveProgress(true);
+    });
+  });
 }
 
-function totalCorpus() {
-  return [
-    'currIndMf','currIndEq','currUsMf','currUsEq','currDebt','currGold','currInvits','currRealEstate'
-  ].reduce((sum, id) => sum + getValue(id), 0);
+function addGoal() {
+  const name = el('goalName').value.trim();
+  const amount = Number(el('goalAmount').value) || 0;
+  const years = Number(el('goalYears').value) || 0;
+  const priority = el('goalPriority').value;
+
+  if (!name || amount <= 0 || years <= 0) {
+    alert('Please enter goal name, amount, and years.');
+    return;
+  }
+
+  goals.push({ id: Date.now(), name, amount, years, priority });
+  el('goalName').value = '';
+  el('goalAmount').value = '';
+  el('goalYears').value = '';
+  el('goalPriority').value = 'Medium';
+  renderGoals();
+  saveProgress(true);
+}
+
+function applyTemplate(templateString) {
+  const [name, amount, years, priority] = templateString.split('|');
+  el('goalName').value = name;
+  el('goalAmount').value = amount;
+  el('goalYears').value = years;
+  el('goalPriority').value = priority;
 }
 
 function calculateTotalCorpus() {
-  document.getElementById('totalCorpusDisplay').textContent = formatINR(totalCorpus());
+  const profile = getProfile();
+  const totalCorpus = profile.currIndMf + profile.currIndEq + profile.currUsMf + profile.currUsEq + profile.currDebt + profile.currGold + profile.currInvits + profile.currRealEstate;
+  el('totalCorpusDisplay').textContent = numberFmt(totalCorpus);
+  el('emergencyNeed').textContent = numberFmt(profile.monthlyExp * 12);
+  el('monthlySurplus').textContent = numberFmt(profile.monthlyIncome - profile.monthlyExp);
+  return totalCorpus;
 }
-assetInputs.forEach(input => input.addEventListener('input', calculateTotalCorpus));
-calculateTotalCorpus();
 
-function renderGoals() {
-  const body = document.getElementById('goalsBody');
-  body.innerHTML = '';
-  goals.forEach(goal => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${goal.name}</strong></td>
-      <td>${formatINR(goal.amount)}</td>
-      <td>${goal.years}</td>
-      <td>${goal.type}</td>
-      <td><button class="btn btn-secondary" onclick="removeGoal(${goal.id})">Remove</button></td>
-    `;
-    body.appendChild(tr);
-  });
-}
-window.removeGoal = id => {
-  const idx = goals.findIndex(g => g.id === id);
-  if (idx >= 0) goals.splice(idx, 1);
-  renderGoals();
-};
-renderGoals();
+function getAdjustedTargets(profile) {
+  const base = { ...profileTargets[profile.riskProfile] };
+  const yearsToRetire = Math.max(profile.retirementAge - profile.age, 0);
 
-document.getElementById('addGoalBtn').addEventListener('click', () => {
-  const name = document.getElementById('goalName').value.trim();
-  const amount = Number(document.getElementById('goalAmount').value);
-  const years = Number(document.getElementById('goalYears').value);
-  const type = document.getElementById('goalType').value || 'wealth';
-
-  if (!name || amount <= 0 || years <= 0) {
-    alert('Please enter goal name, amount, and years away.');
-    return;
+  if (profile.age >= 55 || yearsToRetire <= 7) {
+    base.debt += 5; base.indEq -= 2; base.usEq -= 1; base.indMf -= 1; base.gold += 1;
+  }
+  if (profile.age < 40 && ['growth', 'aggressive'].includes(profile.riskProfile)) {
+    base.indEq += 1; base.usEq += 1; base.debt -= 2;
   }
 
-  goals.push({ id: Date.now(), name, amount, years, type });
-  renderGoals();
-  document.getElementById('goalName').value = '';
-  document.getElementById('goalAmount').value = '';
-  document.getElementById('goalYears').value = '';
-  document.getElementById('goalType').value = 'wealth';
-});
+  const total = Object.values(base).reduce((a,b) => a + b, 0);
+  Object.keys(base).forEach((k) => base[k] = +(base[k] * (100 / total)).toFixed(1));
+  return base;
+}
 
-function buildTargets() {
-  const age = getValue('age');
-  const retirementAge = getValue('retirementAge');
-  const yearsToRetire = Math.max(retirementAge - age, 0);
-  const risk = document.getElementById('riskProfile').value;
-  const mode = document.getElementById('plannerMode').value;
-  const emergencyMonths = getValue('emergencyMonths');
+function validateStep(step) {
+  const p = getProfile();
+  if (step === 2) {
+    if (!p.userName || !p.userEmail || p.age < 18 || p.retirementAge <= p.age || p.monthlyIncome <= 0) {
+      alert('Please complete profile details with valid age, retirement age, income, name, and email.');
+      return false;
+    }
+  }
+  if (step === 3) {
+    if (goals.length === 0) {
+      alert('Please add at least one goal before continuing.');
+      return false;
+    }
+  }
+  if (step === 4) {
+    if (calculateTotalCorpus() <= 0) {
+      alert('Please enter current portfolio values before continuing.');
+      return false;
+    }
+  }
+  return true;
+}
 
-  let equityBase = 55;
-  if (risk === 'conservative') equityBase = 35;
-  if (risk === 'balanced') equityBase = 50;
-  if (risk === 'growth') equityBase = 65;
-  if (risk === 'aggressive') equityBase = 75;
+function showStep(step) {
+  stepEls().forEach((section) => section.classList.add('hidden'));
+  document.querySelector(`.planner-step[data-step="${step}"]`).classList.remove('hidden');
+  currentStep = step;
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-  if (yearsToRetire < 10) equityBase -= 10;
-  if (yearsToRetire > 20) equityBase += 5;
-  if (emergencyMonths < 3) equityBase -= 5;
+function updateProgress() {
+  el('stepCounter').textContent = `Step ${currentStep} of 5`;
+  el('progressFill').style.width = `${(currentStep / 5) * 100}%`;
+  document.querySelectorAll('.step-label').forEach((label, idx) => {
+    const step = idx + 1;
+    label.classList.toggle('active', step === currentStep);
+    label.classList.toggle('complete', step < currentStep);
+  });
+}
 
-  equityBase = Math.min(80, Math.max(25, equityBase));
+function updateDefaultSummary() {
+  const profile = getProfile();
+  const yearsToRetire = Math.max(profile.retirementAge - profile.age, 0);
+  const text = `${capitalize(profile.riskProfile)} profile • ${yearsToRetire} years to retirement`;
+  el('defaultSummary').textContent = text;
+}
 
-  let debt = Math.max(10, 100 - equityBase - 10);
-  let gold = 8;
-  let invits = mode === 'advanced' ? 8 : 5;
-  let realEstate = mode === 'advanced' ? 12 : mode === 'hybrid' ? 8 : 5;
-  let global = risk === 'aggressive' || risk === 'growth' ? 12 : 8;
+function capitalize(v) { return v ? v.charAt(0).toUpperCase() + v.slice(1) : ''; }
 
-  const indiaMf = Math.round(equityBase * (mode === 'mf' ? 0.65 : 0.45));
-  const indiaEq = Math.round(equityBase * (mode === 'advanced' ? 0.25 : 0.1));
-  const usMf = global;
-  const usEq = mode === 'advanced' ? 5 : 0;
+function buildAllocationRows(targets) {
+  const labels = [
+    ['indMf', 'India Mutual Funds'],
+    ['indEq', 'India Direct Equity'],
+    ['usMf', 'US Mutual Funds / ETFs'],
+    ['usEq', 'US Direct Equity'],
+    ['debt', 'Debt / Fixed Income'],
+    ['gold', 'Gold / Silver'],
+    ['invits', 'InvITs / REITs'],
+    ['realEstate', 'Real Estate (Investment)']
+  ];
 
-  const allocated = indiaMf + indiaEq + usMf + usEq + debt + gold + invits + realEstate;
-  debt += (100 - allocated);
+  el('targetBreakdown').innerHTML = labels.map(([key, label]) => `<li><span>${label}</span><span>${targets[key]}%</span></li>`).join('');
+}
+
+function buildActionPlan(targets, totalCorpus, profile) {
+  const mapping = [
+    ['indMf', 'India Mutual Funds', profile.currIndMf],
+    ['indEq', 'India Direct Equity', profile.currIndEq],
+    ['usMf', 'US Mutual Funds / ETFs', profile.currUsMf],
+    ['usEq', 'US Direct Equity', profile.currUsEq],
+    ['debt', 'Debt / Fixed Income', profile.currDebt],
+    ['gold', 'Gold / Silver', profile.currGold],
+    ['invits', 'InvITs / REITs', profile.currInvits],
+    ['realEstate', 'Real Estate (Investment)', profile.currRealEstate],
+  ];
+
+  const actionItems = [];
+  el('actionPlan').innerHTML = '';
+  mapping.forEach(([key, label, currentAmount]) => {
+    const targetAmount = (targets[key] / 100) * totalCorpus;
+    const diff = Math.round(targetAmount - currentAmount);
+    let badge = '<span class="hold-action">Hold</span>';
+    if (Math.abs(diff) >= 5000) {
+      badge = diff > 0 ? `<span class="buy-action">Buy ${numberFmt(diff)}</span>` : `<span class="sell-action">Trim ${numberFmt(Math.abs(diff))}</span>`;
+      actionItems.push({ label, diff });
+    }
+    const row = document.createElement('li');
+    row.innerHTML = `<span>${label}</span>${badge}`;
+    el('actionPlan').appendChild(row);
+  });
+
+  actionItems.sort((a,b) => Math.abs(b.diff) - Math.abs(a.diff));
+  const top = actionItems[0];
+  if (top) {
+    el('topAction').textContent = top.diff > 0 ? 'Add allocation' : 'Reduce allocation';
+    el('topActionDetail').textContent = `${top.label}: ${numberFmt(Math.abs(top.diff))}`;
+  } else {
+    el('topAction').textContent = 'Mostly aligned';
+    el('topActionDetail').textContent = 'Current portfolio is close to target.';
+  }
+}
+
+function filterFunds(profile) {
+  const risk = profile.riskProfile;
+  const yearsToRetire = Math.max(profile.retirementAge - profile.age, 0);
+  return fundDatabase.filter((fund) => {
+    if (fund.category.includes('Small Cap')) return ['growth', 'aggressive'].includes(risk) && yearsToRetire >= 7;
+    if (fund.category.includes('FANG')) return ['growth', 'aggressive'].includes(risk);
+    if (fund.category.includes('Debt') || fund.category.includes('Gold')) return true;
+    return true;
+  }).sort((a,b) => b.score - a.score).slice(0, 6);
+}
+
+function renderFunds(profile) {
+  const funds = filterFunds(profile);
+  const tbody = el('fundTableBody');
+  tbody.innerHTML = '';
+  funds.forEach((fund) => {
+    const tr = document.createElement('tr');
+    tr.dataset.fund = fund.name;
+    tr.innerHTML = `
+      <td>${fund.category}</td>
+      <td><strong>${fund.name}</strong></td>
+      <td><span class="fit-badge">${fund.fit}</span></td>
+      <td><span class="rating-badge">${fund.valueResearch}</span></td>
+      <td><span class="rating-badge">${fund.moneycontrol}</span></td>
+      <td>${fund.purpose}</td>
+    `;
+    tr.addEventListener('click', () => openFundModal(fund));
+    tbody.appendChild(tr);
+  });
+}
+
+function openFundModal(fund) {
+  el('modalFundName').textContent = fund.name;
+  el('modalFundBody').innerHTML = `
+    <div class="tagline">${fund.category} • ${fund.fit}</div>
+    <p>${fund.notes}</p>
+    <div class="modal-grid">
+      <div class="modal-stat"><span>Value Research Rating</span><strong>${fund.valueResearch}</strong></div>
+      <div class="modal-stat"><span>Moneycontrol Rating</span><strong>${fund.moneycontrol}</strong></div>
+      <div class="modal-stat"><span>Expense Profile</span><strong>${fund.expense}</strong></div>
+      <div class="modal-stat"><span>Riskometer</span><strong>${fund.riskometer}</strong></div>
+      <div class="modal-stat"><span>Benchmark</span><strong>${fund.benchmark}</strong></div>
+      <div class="modal-stat"><span>Alternative</span><strong>${fund.alt}</strong></div>
+    </div>
+  `;
+  el('fundModal').classList.remove('hidden');
+}
+
+function closeFundModal() { el('fundModal').classList.add('hidden'); }
+
+function calculateGoalFeasibility(profile, totalCorpus) {
+  const expectedReturn = 0.10;
+  const inflation = 0.06;
+  const monthlyReturn = expectedReturn / 12;
+  let totalPVNeeded = 0;
+
+  goals.forEach((g) => {
+    const futureCost = g.amount * Math.pow(1 + inflation, g.years);
+    const presentValue = futureCost / Math.pow(1 + expectedReturn, g.years);
+    totalPVNeeded += presentValue;
+  });
+
+  const avgYears = goals.length ? goals.reduce((s, g) => s + g.years, 0) / goals.length : 10;
+  const months = avgYears * 12;
+  const sipPV = profile.monthlySip > 0 ? profile.monthlySip * ((1 - Math.pow(1 + monthlyReturn, -months)) / monthlyReturn) : 0;
+  const totalPVAvailable = totalCorpus + sipPV;
+
+  const retireYears = Math.max(profile.retirementAge - profile.age, 0);
+  const futureMonthlyExp = profile.monthlyExp * Math.pow(1 + inflation, retireYears);
+  const fireTarget = futureMonthlyExp * 12 * 25;
+  const fvCorpus = totalCorpus * Math.pow(1 + expectedReturn, retireYears);
+  const fvSip = profile.monthlySip > 0 ? profile.monthlySip * ((Math.pow(1 + monthlyReturn, retireYears * 12) - 1) / monthlyReturn) * (1 + monthlyReturn) : 0;
+  const totalFV = fvCorpus + fvSip;
+
+  let goalStatus = totalPVAvailable >= totalPVNeeded ? 'On Track' : 'Gap Found';
+  let fireStatus = totalFV >= fireTarget ? 'Ready' : 'Gap Found';
+  let healthScore = 50;
+
+  const emergencyNeed = profile.monthlyExp * 12;
+  const defensiveBucket = profile.currDebt + profile.currGold;
+  if (defensiveBucket >= emergencyNeed) healthScore += 15;
+  if (profile.monthlyIncome > profile.monthlyExp) healthScore += 10;
+  if (goalStatus === 'On Track') healthScore += 15;
+  if (fireStatus === 'Ready') healthScore += 10;
+
+  healthScore = Math.min(100, healthScore);
 
   return {
-    indiaMf,
-    indiaEq,
-    usMf,
-    usEq,
-    debt,
-    gold,
-    invits,
-    realEstate,
-    yearsToRetire
+    goalStatus,
+    fireStatus,
+    healthScore,
+    totalPVNeeded,
+    totalPVAvailable,
+    fireTarget,
+    totalFV,
+    futureMonthlyExp,
+    emergencyNeed
   };
 }
 
-function healthDiagnostics(corpus, targets) {
-  const diagnostics = [];
-  const monthlyExp = getValue('monthlyExp');
-  const emergencyMonths = getValue('emergencyMonths');
-  const debtCurrent = getValue('currDebt');
-  const smallRiskProxy = getValue('currIndEq') + getValue('currUsEq');
-  const directEqPct = corpus ? (smallRiskProxy / corpus) * 100 : 0;
+function renderFeasibility(feasibility, profile) {
+  el('goalStatus').textContent = feasibility.goalStatus;
+  el('goalMessage').textContent = feasibility.goalStatus === 'On Track'
+    ? 'Current corpus + SIP appears sufficient for listed goals.'
+    : `Gap of ${numberFmt(feasibility.totalPVNeeded - feasibility.totalPVAvailable)} in present value terms.`;
 
-  if (monthlyExp * 6 > debtCurrent && emergencyMonths < 6) {
-    diagnostics.push(['Emergency fund weak', 'Build 6-12 months of expenses in liquid / low-risk debt first.', 'danger']);
-  } else {
-    diagnostics.push(['Emergency fund okay', 'Liquidity bucket is reasonably aligned for planner use.', 'success']);
-  }
+  el('fireStatus').textContent = feasibility.fireStatus;
+  el('fireMessage').textContent = feasibility.fireStatus === 'Ready'
+    ? `Projected corpus ${numberFmt(feasibility.totalFV)} vs target ${numberFmt(feasibility.fireTarget)}.`
+    : `Need to improve retirement funding; target ${numberFmt(feasibility.fireTarget)}.`;
 
-  if (directEqPct > 25) {
-    diagnostics.push(['Direct equity concentration high', 'Consider routing incremental SIPs to core mutual funds and debt instead of adding more stock-specific risk.', 'warn']);
-  } else {
-    diagnostics.push(['Concentration acceptable', 'Direct equity share is not excessive for a diversified plan.', 'info']);
-  }
+  el('healthScore').textContent = `${feasibility.healthScore}/100`;
+  el('healthMessage').textContent = feasibility.healthScore >= 80 ? 'Strong' : feasibility.healthScore >= 65 ? 'Good, but improvable' : 'Needs attention';
 
-  if (getValue('currUsMf') + getValue('currUsEq') < corpus * 0.05) {
-    diagnostics.push(['Global diversification light', 'Add international exposure gradually for currency and geography diversification.', 'warn']);
-  } else {
-    diagnostics.push(['Global diversification present', 'International sleeve exists and improves diversification.', 'success']);
-  }
-
-  if (getValue('currGold') < corpus * 0.05) {
-    diagnostics.push(['Low defensive hedge', 'Gold can serve as a portfolio shock absorber in inflation / currency stress scenarios.', 'info']);
-  }
-
-  const score = Math.max(35, Math.min(95,
-    70 + (emergencyMonths >= 6 ? 8 : -8) + (directEqPct <= 25 ? 5 : -7) + ((getValue('currUsMf') + getValue('currUsEq')) >= corpus * 0.05 ? 5 : -5)
-  ));
-
-  return { diagnostics, score };
-}
-
-function scoreFund(fund, bucketFit, riskProfile) {
-  const ratingSupport = ((fund.vr + fund.mc) / 10) * 10;
-  const riskFit = (
-    (riskProfile === 'conservative' && /Low|Moderate/.test(fund.risk)) ||
-    (riskProfile === 'balanced' && !/Very High/.test(fund.risk)) ||
-    (riskProfile === 'growth' && !/Low to Moderate/.test(fund.risk)) ||
-    (riskProfile === 'aggressive')
-  ) ? 10 : 6;
-
-  const score =
-    bucketFit * 3 +
-    fund.consistency * 2 +
-    fund.costScore * 1.5 +
-    ratingSupport +
-    riskFit;
-
-  return Math.round(score);
-}
-
-function renderFunds(targets) {
-  const body = document.getElementById('fundTableBody');
-  body.innerHTML = '';
-  const riskProfile = document.getElementById('riskProfile').value;
-
-  const fundBuckets = [
-    { label: 'Core Equity', list: fundData.core, alloc: Math.max(targets.indiaMf - 10, 20) },
-    { label: 'Satellite Equity', list: riskProfile === 'conservative' ? [] : fundData.satellite, alloc: riskProfile === 'aggressive' ? 10 : 6 },
-    { label: 'Debt / Safety', list: fundData.debt, alloc: targets.debt },
-    { label: 'International', list: fundData.global, alloc: targets.usMf }
-  ];
-
-  fundBuckets.forEach(bucket => {
-    bucket.list.forEach((fund, idx) => {
-      const fit = bucket.label === 'Debt / Safety' ? 10 : bucket.label === 'Core Equity' ? 9 : 8;
-      const score = scoreFund(fund, fit, riskProfile);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx === 0 ? `<strong>${bucket.label}</strong>` : ''}</td>
-        <td><strong>${fund.name}</strong><br><span style="color:var(--muted)">${fund.category}</span></td>
-        <td>${fund.notes}</td>
-        <td>${'★'.repeat(fund.vr)}</td>
-        <td>${'★'.repeat(fund.mc)}</td>
-        <td>${fund.risk}</td>
-        <td><span class="score-badge ${score >= 78 ? 'high' : score >= 65 ? 'med' : 'low'}">${score}/100</span></td>
-        <td>${idx === 0 ? `${bucket.alloc}%` : idx === 1 ? 'Alternative' : 'Optional'}</td>
-      `;
-      body.appendChild(tr);
-    });
-  });
-}
-
-function createActionRows(targets, corpus) {
-  const actionPlan = document.getElementById('actionPlan');
-  actionPlan.innerHTML = '';
-  const mapping = [
-    ['India Equity Funds', getValue('currIndMf'), targets.indiaMf],
-    ['India Direct Equity', getValue('currIndEq'), targets.indiaEq],
-    ['International Funds', getValue('currUsMf'), targets.usMf],
-    ['US Direct Equity', getValue('currUsEq'), targets.usEq],
-    ['Debt / Fixed Income', getValue('currDebt'), targets.debt],
-    ['Gold / Silver', getValue('currGold'), targets.gold],
-    ['InvIT / REIT', getValue('currInvits'), targets.invits],
-    ['Real Estate', getValue('currRealEstate'), targets.realEstate]
-  ];
-
-  let bestRoute = null;
-  mapping.forEach(([name, currentAmt, targetPct]) => {
-    const targetAmt = corpus * targetPct / 100;
-    const diff = targetAmt - currentAmt;
-    const action = Math.abs(diff) < corpus * 0.015 ? 'Hold' : diff > 0 ? 'Add' : 'Trim';
-    const cls = action === 'Add' ? 'success' : action === 'Trim' ? 'warn' : 'info';
-
-    if (diff > 0 && (!bestRoute || diff > bestRoute.diff)) bestRoute = { name, diff };
-
-    const row = document.createElement('div');
-    row.className = 'action-row';
-    row.innerHTML = `
-      <div>
-        <strong>${name}</strong>
-        <span>Current ${formatINR(currentAmt)} • Target ${targetPct}% (${formatINR(targetAmt)})</span>
-      </div>
-      <div class="badge ${cls}">${action} ${Math.abs(diff) < 1 ? '' : formatINR(Math.abs(diff))}</div>
-    `;
-    actionPlan.appendChild(row);
-  });
-
-  document.getElementById('sipRoute').textContent = bestRoute ? bestRoute.name : 'Balanced';
-  document.getElementById('sipRouteNote').textContent = bestRoute ? `Route next SIP toward gap of ${formatINR(bestRoute.diff)}` : 'No major allocation gaps';
-}
-
-function futureValueWithStepUp(monthlySip, annualStep, monthlyRate, months) {
-  let fv = 0;
-  let sip = monthlySip;
-  for (let m = 1; m <= months; m++) {
-    fv = (fv + sip) * (1 + monthlyRate);
-    if (m % 12 === 0) sip *= (1 + annualStep);
-  }
-  return fv;
-}
-
-function renderGoalsAndRetirement(corpus, targets) {
-  const expectedReturn = getValue('expectedReturn') / 100;
-  const inflation = getValue('inflation') / 100;
-  const withdrawalRate = getValue('withdrawalRate') / 100;
-  const sipStepUp = getValue('sipStepUp') / 100;
-  const monthlySip = getValue('monthlySip');
-  const goalWrap = document.getElementById('goalFeasibility');
-  const retirementPanel = document.getElementById('retirementPanel');
-  goalWrap.innerHTML = '';
-  retirementPanel.innerHTML = '';
-
-  let onTrack = 0;
-  goals.forEach(goal => {
-    const fvNeed = goal.amount * Math.pow(1 + inflation, goal.years);
-    const share = corpus * (goal.type === 'retirement' ? 0.45 : goal.type === 'education' ? 0.2 : 0.12);
-    const monthlyRate = expectedReturn / 12;
-    const fvCorpus = share * Math.pow(1 + expectedReturn, goal.years);
-    const fvSip = futureValueWithStepUp(monthlySip * 0.4, sipStepUp, monthlyRate, goal.years * 12);
-    const projected = fvCorpus + fvSip;
-    const gap = fvNeed - projected;
-    const ok = gap <= 0;
-    if (ok) onTrack++;
-
-    const card = document.createElement('div');
-    card.className = 'note-card';
-    card.innerHTML = `
-      <h4>${goal.name} <span class="badge ${ok ? 'success' : 'warn'}">${ok ? 'On Track' : 'Needs Attention'}</span></h4>
-      <p>Inflation-adjusted target: <strong>${formatINR(fvNeed)}</strong> • Projected pool: <strong>${formatINR(projected)}</strong>${ok ? '' : ` • Gap: <strong>${formatINR(gap)}</strong>`}</p>
-    `;
-    goalWrap.appendChild(card);
-  });
-
-  document.getElementById('goalReadiness').textContent = `${onTrack}/${goals.length}`;
-  document.getElementById('goalNote').textContent = onTrack === goals.length ? 'All tracked goals look funded in base case' : 'Some goals may need higher SIP or lower risk drift';
-
-  const yearsToRetire = targets.yearsToRetire;
-  const futureMonthlyExp = getValue('monthlyExp') * Math.pow(1 + inflation, yearsToRetire);
-  const fireTarget = (futureMonthlyExp * 12) / Math.max(withdrawalRate, 0.03);
-  const fvCorpus = corpus * Math.pow(1 + expectedReturn, yearsToRetire);
-  const fvSip = futureValueWithStepUp(monthlySip, sipStepUp, expectedReturn / 12, yearsToRetire * 12);
-  const totalFv = fvCorpus + fvSip;
-  const retireOk = totalFv >= fireTarget;
-  const retirementGap = Math.max(0, fireTarget - totalFv);
-
-  const base = document.createElement('div');
-  base.className = 'note-card';
-  base.innerHTML = `
-    <h4>${retireOk ? 'Retirement base case looks funded' : 'Retirement gap detected'} <span class="badge ${retireOk ? 'success' : 'danger'}">${retireOk ? 'Comfortable' : 'Gap'}</span></h4>
-    <p>Projected corpus at retirement: <strong>${formatINR(totalFv)}</strong> • Required corpus using ${Math.round(withdrawalRate * 100)}% SWR: <strong>${formatINR(fireTarget)}</strong>${retireOk ? '' : ` • Gap: <strong>${formatINR(retirementGap)}</strong>`}</p>
+  el('feasibilityReport').innerHTML = `
+    <div class="note-card">
+      <strong>Goal Feasibility</strong>
+      <div>Required present value for goals: ${numberFmt(feasibility.totalPVNeeded)}</div>
+      <div>Available present value from corpus + SIPs: ${numberFmt(feasibility.totalPVAvailable)}</div>
+    </div>
+    <div class="note-card">
+      <strong>Retirement / FIRE</strong>
+      <div>Future monthly expense at retirement: ${numberFmt(feasibility.futureMonthlyExp)}</div>
+      <div>4% withdrawal target corpus: ${numberFmt(feasibility.fireTarget)}</div>
+      <div>Projected corpus: ${numberFmt(feasibility.totalFV)}</div>
+    </div>
+    <div class="note-card">
+      <strong>Emergency Reserve</strong>
+      <div>Suggested emergency fund: ${numberFmt(feasibility.emergencyNeed)}</div>
+      <div>Current debt + gold bucket: ${numberFmt(profile.currDebt + profile.currGold)}</div>
+    </div>
   `;
-
-  const lowReturn = getValue('lowReturn') / 100;
-  const crashDrawdown = getValue('crashDrawdown') / 100;
-  const stressCorpus = (corpus * (1 - crashDrawdown * 0.55)) * Math.pow(1 + lowReturn, yearsToRetire);
-  const stressSip = futureValueWithStepUp(monthlySip, sipStepUp, lowReturn / 12, yearsToRetire * 12);
-  const stressTotal = stressCorpus + stressSip;
-  const stress = document.createElement('div');
-  stress.className = 'note-card';
-  stress.innerHTML = `
-    <h4>Stress scenario snapshot <span class="badge info">Conservative</span></h4>
-    <p>Assuming a ${Math.round(crashDrawdown)}% equity drawdown and ${Math.round(lowReturn * 100)}% long-term return, projected retirement corpus becomes <strong>${formatINR(stressTotal)}</strong>.</p>
-  `;
-
-  retirementPanel.append(base, stress);
-  document.getElementById('retirementStatus').textContent = retireOk ? 'On Track' : 'Gap';
-  document.getElementById('retirementNote').textContent = retireOk ? 'Base case retirement target looks achievable' : `Needs ${formatINR(retirementGap)} more over time`;
 }
 
-function renderAdvisorNotes(corpus, targets, healthScore) {
-  const wrap = document.getElementById('advisorNotes');
-  wrap.innerHTML = '';
+function renderAdvisorNotes(profile, feasibility, targets) {
   const notes = [];
+  const surplus = profile.monthlyIncome - profile.monthlyExp;
+  if (surplus < profile.monthlySip) {
+    notes.push({ title: 'Cashflow caution', body: 'Current SIP is higher than monthly surplus. Verify whether the SIP is fully supported by recurring income.' });
+  }
+  if ((profile.currDebt + profile.currGold) < profile.monthlyExp * 12) {
+    notes.push({ title: 'Emergency fund gap', body: 'Increase debt / liquid allocation until at least 12 months of expenses are covered.' });
+  }
+  if (['growth', 'aggressive'].includes(profile.riskProfile)) {
+    notes.push({ title: 'Equity discipline', body: 'Use equity-heavy allocation only for long-duration goals. Keep near-term expenses out of volatile assets.' });
+  }
+  notes.push({ title: 'Ratings usage', body: 'Value Research Rating and Moneycontrol Rating are supporting signals, not standalone buy decisions.' });
+  notes.push({ title: 'Suggested approach', body: `For a ${profile.riskProfile} profile, use India Mutual Funds (${targets.indMf}%) as the core and debt (${targets.debt}%) for stability.` });
 
-  if (healthScore < 65) {
-    notes.push(['Fix basics first', 'Strengthen emergency liquidity and reduce avoidable concentration before chasing alpha.']);
-  }
-  if (targets.debt >= 20) {
-    notes.push(['Debt is meaningful for this profile', 'Given risk profile and retirement horizon, stability assets deserve a larger role than in your earlier MVP.']);
-  }
-  if (targets.usMf >= 8) {
-    notes.push(['Keep global exposure intentional', 'International allocation should be treated as diversification support, not only tactical return chasing.']);
-  }
-  notes.push(['Use ratings correctly', 'Value Research and Moneycontrol ratings can support decisions, but category fit, consistency, cost, and risk control should drive fund selection.']);
-  notes.push(['Upgrade path for production', 'Next production step is to replace sample fund data with a maintained CSV or API-driven dataset and add overlap analysis.']);
-
-  notes.forEach(([title, text]) => {
-    const el = document.createElement('div');
-    el.className = 'note-card';
-    el.innerHTML = `<h4>${title}</h4><p>${text}</p>`;
-    wrap.appendChild(el);
-  });
+  el('advisorNotes').innerHTML = notes.map((note) => `<div class="note-card"><strong>${note.title}</strong><div>${note.body}</div></div>`).join('');
 }
 
-function renderDiagnostics(targets) {
-  const corpus = totalCorpus();
-  const { diagnostics, score } = healthDiagnostics(corpus, targets);
-  const wrap = document.getElementById('diagnostics');
-  wrap.innerHTML = '';
-  diagnostics.forEach(([title, text, tone]) => {
-    const div = document.createElement('div');
-    div.className = 'note-card';
-    div.innerHTML = `<h4>${title} <span class="badge ${tone}">${tone === 'danger' ? 'Urgent' : tone === 'warn' ? 'Watch' : 'Okay'}</span></h4><p>${text}</p>`;
-    wrap.appendChild(div);
-  });
-
-  document.getElementById('healthScore').textContent = `${score}/100`;
-  document.getElementById('healthNote').textContent = score >= 80 ? 'Strong base structure' : score >= 65 ? 'Good, with room to improve' : 'Needs portfolio clean-up';
-  return score;
-}
-
-function drawChart(corpus, targets) {
-  const ctx = document.getElementById('allocationChart');
-  if (!ctx || typeof Chart === 'undefined') {
-    const parent = ctx ? ctx.parentElement : null;
-    if (parent && !document.getElementById('chartFallbackNote')) {
-      const note = document.createElement('div');
-      note.id = 'chartFallbackNote';
-      note.className = 'note-card';
-      note.innerHTML = '<h4>Chart unavailable</h4><p>The planner still works, but the chart library did not load. Refresh once or check internet access for the Chart.js CDN.</p>';
-      parent.appendChild(note);
-    }
-    return;
-  }
-
-  const labels = ['India MF', 'India Direct', 'Intl MF', 'US Direct', 'Debt', 'Gold', 'InvIT/REIT', 'Real Estate'];
-  const current = [
-    getValue('currIndMf'), getValue('currIndEq'), getValue('currUsMf'), getValue('currUsEq'),
-    getValue('currDebt'), getValue('currGold'), getValue('currInvits'), getValue('currRealEstate')
-  ].map(v => corpus ? Number(((v / corpus) * 100).toFixed(1)) : 0);
-  const target = [targets.indiaMf, targets.indiaEq, targets.usMf, targets.usEq, targets.debt, targets.gold, targets.invits, targets.realEstate];
-
-  if (allocationChart) allocationChart.destroy();
-  allocationChart = new Chart(ctx, {
-    type: 'bar',
+function chartConfig(labels, data, title) {
+  return {
+    type: 'pie',
     data: {
       labels,
-      datasets: [
-        { label: 'Current %', data: current },
-        { label: 'Target %', data: target }
-      ]
+      datasets: [{
+        data,
+        backgroundColor: ['#2563eb','#0ea5e9','#22c55e','#f59e0b','#7c3aed','#e11d48','#14b8a6','#64748b'],
+        borderColor: '#ffffff',
+        borderWidth: 2
+      }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: '#e7edf7' } }
-      },
-      scales: {
-        x: { ticks: { color: '#9fb0c8' }, grid: { color: 'rgba(255,255,255,.05)' } },
-        y: { ticks: { color: '#9fb0c8' }, grid: { color: 'rgba(255,255,255,.05)' }, beginAtZero: true }
+        legend: { position: 'bottom' },
+        title: { display: false, text: title }
       }
     }
-  });
-}
-
-function collectProfile() {
-  return {
-    age: getValue('age'),
-    retirementAge: getValue('retirementAge'),
-    monthlyIncome: getValue('monthlyIncome'),
-    monthlySip: getValue('monthlySip'),
-    monthlyExp: getValue('monthlyExp'),
-    emergencyMonths: getValue('emergencyMonths'),
-    riskProfile: document.getElementById('riskProfile').value,
-    plannerMode: document.getElementById('plannerMode').value,
-    expectedReturn: getValue('expectedReturn'),
-    inflation: getValue('inflation'),
-    withdrawalRate: getValue('withdrawalRate'),
-    sipStepUp: getValue('sipStepUp'),
-    crashDrawdown: getValue('crashDrawdown'),
-    lowReturn: getValue('lowReturn'),
-    assets: {
-      currIndMf: getValue('currIndMf'), currIndEq: getValue('currIndEq'), currUsMf: getValue('currUsMf'), currUsEq: getValue('currUsEq'),
-      currDebt: getValue('currDebt'), currGold: getValue('currGold'), currInvits: getValue('currInvits'), currRealEstate: getValue('currRealEstate')
-    },
-    goals
   };
 }
 
-function fillProfile(data) {
-  Object.entries(data).forEach(([key, value]) => {
-    const el = document.getElementById(key);
-    if (el && typeof value !== 'object') el.value = value;
-  });
-  if (data.assets) {
-    Object.entries(data.assets).forEach(([key, value]) => {
-      const el = document.getElementById(key);
-      if (el) el.value = value;
-    });
-  }
-  if (Array.isArray(data.goals)) {
-    goals.splice(0, goals.length, ...data.goals);
-    renderGoals();
-  }
-  calculateTotalCorpus();
-}
+function renderCharts(profile, targets) {
+  const labels = ['India MF', 'India Eq', 'US MF', 'US Eq', 'Debt', 'Gold', 'InvITs', 'Real Estate'];
+  const currentData = [profile.currIndMf, profile.currIndEq, profile.currUsMf, profile.currUsEq, profile.currDebt, profile.currGold, profile.currInvits, profile.currRealEstate];
+  const targetData = [targets.indMf, targets.indEq, targets.usMf, targets.usEq, targets.debt, targets.gold, targets.invits, targets.realEstate];
 
-document.getElementById('saveProfileBtn').addEventListener('click', () => {
-  localStorage.setItem('mfPlannerProProfile', JSON.stringify(collectProfile()));
-  alert('Profile saved locally in your browser.');
-});
-
-document.getElementById('loadSampleBtn').addEventListener('click', () => {
-  const saved = localStorage.getItem('mfPlannerProProfile');
-  if (saved) {
-    fillProfile(JSON.parse(saved));
-    alert('Saved profile loaded.');
-  } else {
-    alert('No saved profile found. Using current sample values.');
-  }
-});
-
-document.getElementById('printBtn').addEventListener('click', () => window.print());
-
-document.getElementById('generatePlanBtn').addEventListener('click', () => {
-  const corpus = totalCorpus();
-  if (!corpus) {
-    alert('Please enter portfolio values first.');
+  if (typeof Chart === 'undefined') {
+    el('currentAllocationChart').replaceWith(document.createTextNode('Chart library unavailable.'));
+    el('targetAllocationChart').replaceWith(document.createTextNode('Chart library unavailable.'));
     return;
   }
 
-  const targets = buildTargets();
-  const healthScore = renderDiagnostics(targets);
-  createActionRows(targets, corpus);
-  renderGoalsAndRetirement(corpus, targets);
-  renderFunds(targets);
-  renderAdvisorNotes(corpus, targets, healthScore);
-  drawChart(corpus, targets);
+  if (currentCharts.current) currentCharts.current.destroy();
+  if (currentCharts.target) currentCharts.target.destroy();
 
-  tabs.forEach(t => t.classList.remove('active'));
-  panels.forEach(p => p.classList.remove('active'));
-  document.querySelector('[data-tab="results"]').classList.add('active');
-  document.getElementById('tab-results').classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+  currentCharts.current = new Chart(el('currentAllocationChart'), chartConfig(labels, currentData, 'Current Allocation'));
+  currentCharts.target = new Chart(el('targetAllocationChart'), chartConfig(labels, targetData, 'Target Allocation'));
+}
 
-calculateTotalCorpus();
+function generatePlan() {
+  const profile = getProfile();
+  const totalCorpus = calculateTotalCorpus();
+  if (totalCorpus <= 0) {
+    alert('Please enter portfolio values before generating the plan.');
+    return;
+  }
+
+  const targets = getAdjustedTargets(profile);
+  const feasibility = calculateGoalFeasibility(profile, totalCorpus);
+
+  buildAllocationRows(targets);
+  buildActionPlan(targets, totalCorpus, profile);
+  renderFunds(profile);
+  renderFeasibility(feasibility, profile);
+  renderAdvisorNotes(profile, feasibility, targets);
+  renderCharts(profile, targets);
+  showStep(5);
+  saveProgress(true);
+}
+
+function saveProgress(silent = false) {
+  const payload = { profile: getProfile(), goals, currentStep };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  if (!silent) alert('Progress saved in your browser.');
+}
+
+function loadProgress() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    alert('No saved progress found.');
+    return;
+  }
+  try {
+    const payload = JSON.parse(raw);
+    setProfile(payload.profile || {});
+    goals = payload.goals || goals;
+    renderGoals();
+    calculateTotalCorpus();
+    updateDefaultSummary();
+    showStep(Math.min(payload.currentStep || 1, 4));
+  } catch {
+    alert('Saved data could not be loaded.');
+  }
+}
+
+function resetPlanner() {
+  showStep(1);
+}
+
+function bindEvents() {
+  el('addGoalBtn').addEventListener('click', addGoal);
+  document.querySelectorAll('.template-btn').forEach((btn) => btn.addEventListener('click', () => applyTemplate(btn.dataset.template)));
+  document.querySelectorAll('.next-btn').forEach((btn) => btn.addEventListener('click', () => {
+    const nextStep = Number(btn.dataset.next);
+    if (validateStep(nextStep)) showStep(nextStep);
+  }));
+  document.querySelectorAll('.back-btn').forEach((btn) => btn.addEventListener('click', () => showStep(Number(btn.dataset.back))));
+  document.querySelectorAll('.asset-input, #monthlyExp, #monthlyIncome, #monthlySip, #age, #retirementAge, #riskProfile').forEach((field) => {
+    field.addEventListener('input', () => { calculateTotalCorpus(); updateDefaultSummary(); saveProgress(true); });
+    field.addEventListener('change', () => { calculateTotalCorpus(); updateDefaultSummary(); saveProgress(true); });
+  });
+
+  ['userName','userEmail','goalName','goalAmount','goalYears'].forEach((id) => {
+    const field = el(id);
+    field.addEventListener('change', () => saveProgress(true));
+  });
+
+  el('generatePlanBtn').addEventListener('click', generatePlan);
+  el('saveProfileBtn').addEventListener('click', () => saveProgress(false));
+  el('resumeProfileBtn').addEventListener('click', loadProgress);
+  el('printReportBtn').addEventListener('click', () => window.print());
+  el('startOverBtn').addEventListener('click', resetPlanner);
+  el('closeModalBtn').addEventListener('click', closeFundModal);
+  el('fundModal').addEventListener('click', (e) => { if (e.target.id === 'fundModal') closeFundModal(); });
+}
+
+function init() {
+  renderGoals();
+  calculateTotalCorpus();
+  updateDefaultSummary();
+  updateProgress();
+  bindEvents();
+}
+
+init();

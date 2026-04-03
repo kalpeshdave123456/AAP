@@ -1,46 +1,34 @@
-# MF Planner Pro
+# Mutual Fund & Asset Allocation Planner
 
-A GitHub-ready, client-side wealth planning app focused on mutual fund strategy, asset allocation, goal readiness, and retirement planning.
+A polished static web app for goal-based planning, mutual fund shortlisting, and portfolio diagnostics.
 
-## What's improved vs the original MVP
-
-- Profile-based target allocation instead of one static allocation for every user
-- Mutual-fund-first recommendation table with sample Value Research and Moneycontrol fields
-- Health score, portfolio diagnostics, and advisor notes
-- Goal feasibility and retirement base/stress scenario views
-- Save profile locally in browser
-- Print/export-friendly layout
-- Works fully on GitHub Pages with no backend
-
-## Important note on ratings and data
-
-This starter includes **sample fund metadata and sample rating fields** for UX demonstration.
-Before production use, replace the `fundData` object in `app.js` with your maintained dataset, CSV pipeline, or API-fed data source.
+## Features
+- Step-by-step wizard with Next / Back navigation
+- Progress bar with profile → goals → portfolio → analysis → results
+- Inline goal entry row with templates
+- Yellow-highlighted user input fields
+- Current vs target allocation pie charts
+- Financial health score, goal readiness, and retirement/FIRE check
+- Mutual fund shortlist with Value Research Rating and Moneycontrol Rating labels
+- Clickable fund comparison modal
+- Save / resume progress using browser localStorage
+- Print / Save PDF report from the browser
 
 ## Files
+- `index.html`
+- `style.css`
+- `app.js`
 
-- `index.html` – layout and sections
-- `style.css` – premium dark UI
-- `app.js` – planning logic, scoring, charts, and local storage
+## Run locally
+Open `index.html` in a modern browser.
 
-## Deploy to GitHub Pages
+## Deploy on GitHub Pages
+1. Create a repository.
+2. Upload these files to the root.
+3. In repository settings, enable GitHub Pages for the main branch root.
+4. Open the published Pages link.
 
-1. Create a new GitHub repository
-2. Upload all files from this folder to the repo root
-3. Commit and push
-4. In GitHub, go to **Settings → Pages**
-5. Set source to **Deploy from a branch**
-6. Choose `main` branch and `/root`
-7. Save
-
-Your site should go live on GitHub Pages shortly.
-
-## Suggested next production upgrades
-
-- Replace sample fund data with real category-wise dataset
-- Add overlap analysis and fund comparison drawer
-- Add CSV import for existing holdings
-- Add Monte Carlo simulation and tax-aware rebalancing
-- Add separate simple mode and advanced mode
-
-Created for Kalpesh Dave.
+## Notes
+- The fund shortlist is a curated planning dataset for demo and product structure.
+- Value Research Rating and Moneycontrol Rating are shown as supporting fields, not as the sole recommendation logic.
+- Mutual funds are subject to market risks.
