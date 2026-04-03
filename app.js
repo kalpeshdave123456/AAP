@@ -201,14 +201,22 @@ window.removeGoal = id => {
 renderGoals();
 
 document.getElementById('addGoalBtn').addEventListener('click', () => {
-  const name = prompt('Goal name', 'New Goal');
-  if (!name) return;
-  const amount = Number(prompt('Goal amount in today\'s rupees', '1000000'));
-  const years = Number(prompt('Years away', '7'));
-  const type = prompt('Goal type: retirement / education / wealth / purchase', 'wealth') || 'wealth';
-  if (!amount || !years) return;
+  const name = document.getElementById('goalName').value.trim();
+  const amount = Number(document.getElementById('goalAmount').value);
+  const years = Number(document.getElementById('goalYears').value);
+  const type = document.getElementById('goalType').value || 'wealth';
+
+  if (!name || amount <= 0 || years <= 0) {
+    alert('Please enter goal name, amount, and years away.');
+    return;
+  }
+
   goals.push({ id: Date.now(), name, amount, years, type });
   renderGoals();
+  document.getElementById('goalName').value = '';
+  document.getElementById('goalAmount').value = '';
+  document.getElementById('goalYears').value = '';
+  document.getElementById('goalType').value = 'wealth';
 });
 
 function buildTargets() {
@@ -507,11 +515,23 @@ function renderDiagnostics(targets) {
 
 function drawChart(corpus, targets) {
   const ctx = document.getElementById('allocationChart');
+  if (!ctx || typeof Chart === 'undefined') {
+    const parent = ctx ? ctx.parentElement : null;
+    if (parent && !document.getElementById('chartFallbackNote')) {
+      const note = document.createElement('div');
+      note.id = 'chartFallbackNote';
+      note.className = 'note-card';
+      note.innerHTML = '<h4>Chart unavailable</h4><p>The planner still works, but the chart library did not load. Refresh once or check internet access for the Chart.js CDN.</p>';
+      parent.appendChild(note);
+    }
+    return;
+  }
+
   const labels = ['India MF', 'India Direct', 'Intl MF', 'US Direct', 'Debt', 'Gold', 'InvIT/REIT', 'Real Estate'];
   const current = [
     getValue('currIndMf'), getValue('currIndEq'), getValue('currUsMf'), getValue('currUsEq'),
     getValue('currDebt'), getValue('currGold'), getValue('currInvits'), getValue('currRealEstate')
-  ].map(v => corpus ? ((v / corpus) * 100).toFixed(1) : 0);
+  ].map(v => corpus ? Number(((v / corpus) * 100).toFixed(1)) : 0);
   const target = [targets.indiaMf, targets.indiaEq, targets.usMf, targets.usEq, targets.debt, targets.gold, targets.invits, targets.realEstate];
 
   if (allocationChart) allocationChart.destroy();
